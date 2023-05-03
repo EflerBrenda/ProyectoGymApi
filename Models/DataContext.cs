@@ -14,6 +14,11 @@ namespace GymApi.Models
 
         }
         public DbSet<Usuario> Usuario { get; set; }
+        public DbSet<Anuncio> Anuncio { get; set; }
+        public DbSet<Ejercicio> Ejercicio { get; set; }
+        public DbSet<Pago> Pago { get; set; }
+        public DbSet<Plan> Plan { get; set; }
+        public DbSet<Rutina> Rutina { get; set; }
 
 
     }
