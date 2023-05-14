@@ -11,5 +11,9 @@ public class Usuario
 
     [Required, DataType(DataType.Password)]
     public string Password { get; set; }
-    //public string Avatar { get; set; }
+    public int PlanId { get; set; }
+    public DateTime fecha_plan_inicio { get; set; }
+    public DateTime fecha_plan_fin { get; set; }
+    public int Activo { get; set; }
+    public int RolId { get; set; }
 }

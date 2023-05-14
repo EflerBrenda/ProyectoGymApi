@@ -99,5 +99,23 @@ namespace InmobiliariaEfler.Api
                 return BadRequest(ex.Message);
             }
         }
+        [HttpPost("NuevoAlumno")]
+        public async Task<IActionResult> Post([FromForm] Usuario alumno)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    contexto.Usuario.Add(alumno);
+                    await contexto.SaveChangesAsync();
+                    return Ok(alumno);
+                }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
