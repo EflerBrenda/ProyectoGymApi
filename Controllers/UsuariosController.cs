@@ -106,9 +106,53 @@ namespace InmobiliariaEfler.Api
             {
                 if (ModelState.IsValid)
                 {
+                    string hashed =Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                    password: alumno.Password,
+                    salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
+                    prf: KeyDerivationPrf.HMACSHA1,
+                    iterationCount: 1000,
+                    numBytesRequested: 256 / 8));
+                    alumno.Password= hashed;
                     contexto.Usuario.Add(alumno);
                     await contexto.SaveChangesAsync();
                     return Ok(alumno);
+                }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPut("cambiarPassword")]
+        public async Task<IActionResult> cambiarPassword([FromForm] CambiarPassword usuario)
+        {
+            try
+            {
+                string hashedPassVieja = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                   password: usuario.PasswordActual,
+                   salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
+                   prf: KeyDerivationPrf.HMACSHA1,
+                   iterationCount: 1000,
+                   numBytesRequested: 256 / 8));
+                string hashedPassNueva = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                       password: usuario.PasswordNueva,
+                       salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
+                       prf: KeyDerivationPrf.HMACSHA1,
+                       iterationCount: 1000,
+                       numBytesRequested: 256 / 8));
+
+
+                var usuarioCambioPassword = await contexto.Usuario.SingleOrDefaultAsync(x => x.Email == User.Identity.Name);
+                string PassVieja = usuarioCambioPassword.Password;
+
+                if (PassVieja == hashedPassVieja)
+                {
+
+                    usuarioCambioPassword.Password = hashedPassNueva;
+                    contexto.Usuario.Update(usuarioCambioPassword);
+                    await contexto.SaveChangesAsync();
+                    return Ok(usuarioCambioPassword);
                 }
                 return BadRequest();
             }

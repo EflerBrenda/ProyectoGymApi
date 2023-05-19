@@ -2322,24 +2322,25 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Brenda\\.nuget\\packages\\": {}
+    "C:\\Users\\efler\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Brenda\\Net\\GymApi\\GymApi.csproj",
+      "projectUniqueName": "D:\\Brenda usuario\\Net\\GymApi\\GymApi.csproj",
       "projectName": "GymApi",
-      "projectPath": "C:\\Users\\Brenda\\Net\\GymApi\\GymApi.csproj",
-      "packagesPath": "C:\\Users\\Brenda\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Brenda\\Net\\GymApi\\obj\\",
+      "projectPath": "D:\\Brenda usuario\\Net\\GymApi\\GymApi.csproj",
+      "packagesPath": "C:\\Users\\efler\\.nuget\\packages\\",
+      "outputPath": "D:\\Brenda usuario\\Net\\GymApi\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Brenda\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\efler\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net6.0"
       ],
       "sources": {
+        "C:\\Program Files\\dotnet\\sdk\\7.0.302\\Sdks\\Microsoft.NET.Sdk.Web\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -2390,6 +2391,24 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[6.0.16, 6.0.16]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Host.win-x64",
+            "version": "[6.0.16, 6.0.16]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[6.0.16, 6.0.16]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
+            "version": "[6.0.16, 6.0.16]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -2398,7 +2417,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.400\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.302\\RuntimeIdentifierGraph.json"
       }
     }
   }
