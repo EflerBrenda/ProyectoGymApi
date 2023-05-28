@@ -4,12 +4,13 @@ namespace GymApi.Models;
 public class Anuncio
 {
     public int Id { get; set; }
-    public String Nombre { get; set; }
-    public String Apellido { get; set; }
-    public String Telefono { get; set; }
-    public String Email { get; set; }
+    public String Descripcion { get; set; }
+    public int? Activo { get; set; }
 
-    [Required, DataType(DataType.Password)]
-    public string Password { get; set; }
-    //public string Avatar { get; set; }
+    [Display(Name = "Fecha anuncio")]
+    public DateTime? Fecha_anuncio { get; set; }
+
+    [Display(Name = "Profesor")]
+    public Usuario? Profesor { get; set; }
+
 }

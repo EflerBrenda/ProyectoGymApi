@@ -31,8 +31,8 @@ namespace InmobiliariaEfler.Api
             this.config = config;
         }
         // GET: api/<controller>
-        [HttpGet]
-        public async Task<ActionResult<Usuario>> Get()
+        [HttpGet("ObtenerPerfil")]
+        public async Task<ActionResult<Usuario>> ObtenerPerfil()
         {
             try
             {
@@ -45,6 +45,48 @@ namespace InmobiliariaEfler.Api
                     Email = u.Email,
                     Telefono = u.Telefono
                 }).SingleOrDefaultAsync()
+                );
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+        [HttpGet("ObtenerProfesores")]
+        public async Task<ActionResult<Usuario>> ObtenerProfesores()
+        {
+            try
+            {
+                return Ok(await contexto.Usuario.Where(u => u.Activo == 1 && u.RolId == 2).Select(u => new
+                {
+                    Id = u.Id,
+                    Nombre = u.Nombre,
+                    Apellido = u.Apellido,
+                    Email = u.Email,
+                    Telefono = u.Telefono
+                }).ToListAsync()
+                );
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+        [HttpGet("ObtenerAlumnos")]
+        public async Task<ActionResult<Usuario>> ObtenerAlumnos()
+        {
+            try
+            {
+                return Ok(await contexto.Usuario.Where(u => u.Activo == 1 && u.RolId == 3).Select(u => new
+                {
+                    Id = u.Id,
+                    Nombre = u.Nombre,
+                    Apellido = u.Apellido,
+                    Email = u.Email,
+                    Telefono = u.Telefono
+                }).ToListAsync()
                 );
 
             }
@@ -99,23 +141,69 @@ namespace InmobiliariaEfler.Api
                 return BadRequest(ex.Message);
             }
         }
-        [HttpPost("NuevoAlumno")]
-        public async Task<IActionResult> Post([FromForm] Usuario alumno)
+        [HttpPost("NuevoUsuario")]
+        public async Task<IActionResult> Post([FromForm] Usuario usuario)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    string hashed =Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                    password: alumno.Password,
+                    string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                    password: usuario.Password,
                     salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
                     prf: KeyDerivationPrf.HMACSHA1,
                     iterationCount: 1000,
                     numBytesRequested: 256 / 8));
-                    alumno.Password= hashed;
-                    contexto.Usuario.Add(alumno);
+                    usuario.Password = hashed;
+                    contexto.Usuario.Add(usuario);
                     await contexto.SaveChangesAsync();
-                    return Ok(alumno);
+                    return Ok(usuario);
+                }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpDelete("BajaUsuario")]
+        public async Task<IActionResult> Delete([FromForm] int idUsuario)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var usuario = contexto.Usuario.Single(u => u.Id == idUsuario);
+                    usuario.Fecha_plan_fin = DateTime.Today;
+                    usuario.Activo = 2;
+                    contexto.Usuario.Update(usuario);
+                    await contexto.SaveChangesAsync();
+                    return Ok(usuario);
+
+                }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPut("EditarUsuario")]
+        public async Task<IActionResult> Put([FromForm] Usuario usuarioEditado)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var usuarioActual = contexto.Usuario.Single(u => u.Id == usuarioEditado.Id);
+                    usuarioActual.Nombre = usuarioEditado.Nombre;
+                    usuarioActual.Apellido = usuarioEditado.Apellido;
+                    usuarioActual.Telefono = usuarioEditado.Telefono;
+                    usuarioActual.Email = usuarioEditado.Email;
+                    contexto.Usuario.Update(usuarioActual);
+                    await contexto.SaveChangesAsync();
+                    return Ok(usuarioActual);
+
                 }
                 return BadRequest();
             }

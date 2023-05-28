@@ -31,73 +31,81 @@ namespace InmobiliariaEfler.Api
             this.config = config;
         }
         // GET: api/<controller>
-        [HttpGet]
-        public async Task<ActionResult<Usuario>> Get()
+        [HttpGet("ObtenerAnuncios")]
+        public async Task<ActionResult<Anuncio>> ObtenerAnuncios()
         {
             try
             {
-                var usuario = User.Identity.Name;
-                return Ok(await contexto.Usuario.Where(u => u.Email == usuario).Select(u => new
-                {
-                    Id = u.Id,
-                    Nombre = u.Nombre,
-                    Apellido = u.Apellido,
-                    Email = u.Email,
-                    Telefono = u.Telefono
-                }).SingleOrDefaultAsync()
-                );
-
+                return Ok(await contexto.Anuncio.Include(u => u.Profesor).Where(a => a.Activo == 1).ToListAsync());
+                /*var anuncios = contexto.Anuncio.FromSqlRaw("Select a.id,descripcion,p.id,p.nombre,p.apellido,p.email FROM anuncio a JOIN usuario p ON (a.profesorid = p.id) WHERE a.Activo = 1").ToList();
+                return Ok(anuncios);*/
             }
             catch (Exception ex)
             {
                 return BadRequest(ex);
             }
         }
-
-        [HttpPost("login")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login([FromForm] UsuarioLogin usuarioLogin)
+        [HttpPost("NuevoAnuncio")]
+        public async Task<IActionResult> Post([FromForm] Anuncio anuncio)
         {
             try
             {
-                string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                    password: usuarioLogin.Password,
-                    salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
-                    prf: KeyDerivationPrf.HMACSHA1,
-                    iterationCount: 1000,
-                    numBytesRequested: 256 / 8));
-
-                var u = await contexto.Usuario.FirstOrDefaultAsync(x => x.Email == usuarioLogin.Email);
-                if (u == null || u.Password != hashed)
+                if (ModelState.IsValid)
                 {
-                    return BadRequest("Nombre de usuario o clave incorrecta");
+                    anuncio.Fecha_anuncio = DateTime.Today;
+                    contexto.Anuncio.Add(anuncio);
+                    await contexto.SaveChangesAsync();
+                    return Ok(anuncio);
                 }
-                else
-                {
-                    var key = new SymmetricSecurityKey(
-                        System.Text.Encoding.ASCII.GetBytes(config["TokenAuthentication:SecretKey"]));
-                    var credenciales = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, u.Email),
-                        new Claim("FullName", u.Nombre + " " + u.Apellido),
-                        //new Claim(ClaimTypes.Role, "Profesor"),
-                    };
-
-                    var token = new JwtSecurityToken(
-                        issuer: config["TokenAuthentication:Issuer"],
-                        audience: config["TokenAuthentication:Audience"],
-                        claims: claims,
-                        expires: DateTime.Now.AddMinutes(60),
-                        signingCredentials: credenciales
-                    );
-                    return Ok(new JwtSecurityTokenHandler().WriteToken(token));
-                }
+                return BadRequest();
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+        [HttpDelete("BajaAnuncio")]
+        public async Task<IActionResult> Delete([FromForm] int idAnuncio)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var anuncio = contexto.Anuncio.Single(u => u.Id == idAnuncio);
+                    anuncio.Activo = 2;
+                    contexto.Anuncio.Update(anuncio);
+                    await contexto.SaveChangesAsync();
+                    return Ok(anuncio);
+
+                }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPut("EditarAnuncio")]
+        public async Task<IActionResult> Put([FromForm] Anuncio anuncioEditado)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var anuncioActual = contexto.Anuncio.Single(u => u.Id == anuncioEditado.Id);
+                    anuncioActual.Descripcion = anuncioEditado.Descripcion;
+                    contexto.Anuncio.Update(anuncioActual);
+                    await contexto.SaveChangesAsync();
+                    return Ok(anuncioActual);
+
+                }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
     }
 }

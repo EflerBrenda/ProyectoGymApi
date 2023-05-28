@@ -9,11 +9,20 @@ public class Usuario
     public String Telefono { get; set; }
     public String Email { get; set; }
 
-    [Required, DataType(DataType.Password)]
-    public string Password { get; set; }
-    public int PlanId { get; set; }
-    public DateTime fecha_plan_inicio { get; set; }
-    public DateTime fecha_plan_fin { get; set; }
-    public int Activo { get; set; }
-    public int RolId { get; set; }
+    //[Required, DataType(DataType.Password)]
+    public string? Password { get; set; }
+
+    [Display(Name = "Plan contratado")]
+
+    public int? PlanId { get; set; }
+
+    [Display(Name = "Fecha de inicio")]
+    public DateTime? Fecha_plan_inicio { get; set; }
+
+    [Display(Name = "Fecha de fin")]
+    public DateTime? Fecha_plan_fin { get; set; }
+    public int? Activo { get; set; }
+
+    [Display(Name = "Rol")]
+    public int? RolId { get; set; }
 }
