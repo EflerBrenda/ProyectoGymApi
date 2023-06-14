@@ -15,7 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Http.Features;
 
-namespace InmobiliariaEfler.Api
+namespace GymApi.Api
 {
     [Route("api/[controller]")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -30,15 +30,13 @@ namespace InmobiliariaEfler.Api
             this.contexto = contexto;
             this.config = config;
         }
-        // GET: api/<controller>
+
         [HttpGet("ObtenerAnuncios")]
         public async Task<ActionResult<Anuncio>> ObtenerAnuncios()
         {
             try
             {
                 return Ok(await contexto.Anuncio.Include(u => u.Profesor).Where(a => a.Activo == 1).ToListAsync());
-                /*var anuncios = contexto.Anuncio.FromSqlRaw("Select a.id,descripcion,p.id,p.nombre,p.apellido,p.email FROM anuncio a JOIN usuario p ON (a.profesorid = p.id) WHERE a.Activo = 1").ToList();
-                return Ok(anuncios);*/
             }
             catch (Exception ex)
             {
@@ -46,12 +44,16 @@ namespace InmobiliariaEfler.Api
             }
         }
         [HttpPost("NuevoAnuncio")]
-        public async Task<IActionResult> Post([FromForm] Anuncio anuncio)
+        public async Task<IActionResult> Post([FromForm] EditarAnuncio nuevoAnuncio)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
+                    var anuncio = new Anuncio();
+                    anuncio.Descripcion = nuevoAnuncio.Descripcion;
+                    anuncio.Profesor = contexto.Usuario.Single(p => p.Id == nuevoAnuncio.ProfesorId);
+                    anuncio.Activo = 1;
                     anuncio.Fecha_anuncio = DateTime.Today;
                     contexto.Anuncio.Add(anuncio);
                     await contexto.SaveChangesAsync();
@@ -86,7 +88,7 @@ namespace InmobiliariaEfler.Api
             }
         }
         [HttpPut("EditarAnuncio")]
-        public async Task<IActionResult> Put([FromForm] Anuncio anuncioEditado)
+        public async Task<IActionResult> Put([FromForm] EditarAnuncio anuncioEditado)
         {
             try
             {
@@ -94,6 +96,7 @@ namespace InmobiliariaEfler.Api
                 {
                     var anuncioActual = contexto.Anuncio.Single(u => u.Id == anuncioEditado.Id);
                     anuncioActual.Descripcion = anuncioEditado.Descripcion;
+                    anuncioActual.Profesor = contexto.Usuario.Single(p => p.Id == anuncioEditado.ProfesorId);
                     contexto.Anuncio.Update(anuncioActual);
                     await contexto.SaveChangesAsync();
                     return Ok(anuncioActual);

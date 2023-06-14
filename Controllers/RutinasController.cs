@@ -15,7 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Http.Features;
 
-namespace InmobiliariaEfler.Api
+namespace GymApi.Api
 {
     [Route("api/[controller]")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -30,69 +30,74 @@ namespace InmobiliariaEfler.Api
             this.contexto = contexto;
             this.config = config;
         }
-        // GET: api/<controller>
-        [HttpGet]
-        public async Task<ActionResult<Usuario>> Get()
+        [HttpGet("ObtenerRutinas")]
+        public async Task<ActionResult<Rutina>> ObtenerRutinas()
         {
             try
             {
-                var usuario = User.Identity.Name;
-                return Ok(await contexto.Usuario.Where(u => u.Email == usuario).Select(u => new
-                {
-                    Id = u.Id,
-                    Nombre = u.Nombre,
-                    Apellido = u.Apellido,
-                    Email = u.Email,
-                    Telefono = u.Telefono
-                }).SingleOrDefaultAsync()
-                );
-
+                return Ok(await contexto.Rutina.Where(a => a.Activo == 1).ToListAsync());
             }
             catch (Exception ex)
             {
                 return BadRequest(ex);
             }
         }
-
-        [HttpPost("login")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login([FromForm] UsuarioLogin usuarioLogin)
+        [HttpPost("NuevaRutina")]
+        public async Task<IActionResult> Post([FromForm] Rutina nuevaRutina)
         {
             try
             {
-                string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                    password: usuarioLogin.Password,
-                    salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
-                    prf: KeyDerivationPrf.HMACSHA1,
-                    iterationCount: 1000,
-                    numBytesRequested: 256 / 8));
-
-                var u = await contexto.Usuario.FirstOrDefaultAsync(x => x.Email == usuarioLogin.Email);
-                if (u == null || u.Password != hashed)
+                if (ModelState.IsValid)
                 {
-                    return BadRequest("Nombre de usuario o clave incorrecta");
+                    var rutina = nuevaRutina;
+                    rutina.Activo = 1;
+                    contexto.Rutina.Add(rutina);
+                    await contexto.SaveChangesAsync();
+                    return Ok(rutina);
                 }
-                else
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpDelete("BajaRutina")]
+        public async Task<IActionResult> Delete([FromForm] int idRutina)
+        {
+            try
+            {
+                if (ModelState.IsValid)
                 {
-                    var key = new SymmetricSecurityKey(
-                        System.Text.Encoding.ASCII.GetBytes(config["TokenAuthentication:SecretKey"]));
-                    var credenciales = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, u.Email),
-                        new Claim("FullName", u.Nombre + " " + u.Apellido),
-                        //new Claim(ClaimTypes.Role, "Profesor"),
-                    };
+                    var rutina = contexto.Rutina.Single(r => r.Id == idRutina);
+                    rutina.Activo = 2;
+                    contexto.Rutina.Update(rutina);
+                    await contexto.SaveChangesAsync();
+                    return Ok(rutina);
 
-                    var token = new JwtSecurityToken(
-                        issuer: config["TokenAuthentication:Issuer"],
-                        audience: config["TokenAuthentication:Audience"],
-                        claims: claims,
-                        expires: DateTime.Now.AddMinutes(60),
-                        signingCredentials: credenciales
-                    );
-                    return Ok(new JwtSecurityTokenHandler().WriteToken(token));
                 }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPut("EditarRutina")]
+        public async Task<IActionResult> Put([FromForm] Rutina rutinaEditado)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var rutinaActual = contexto.Rutina.Single(r => r.Id == rutinaEditado.Id);
+                    rutinaActual.Descripcion = rutinaEditado.Descripcion;
+                    contexto.Rutina.Update(rutinaActual);
+                    await contexto.SaveChangesAsync();
+                    return Ok(rutinaActual);
+
+                }
+                return BadRequest();
             }
             catch (Exception ex)
             {

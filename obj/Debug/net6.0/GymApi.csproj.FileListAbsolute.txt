@@ -139,3 +139,8 @@ D:\Brenda usuario\Net\GymApi\obj\Debug\net6.0\refint\GymApi.dll
 D:\Brenda usuario\Net\GymApi\obj\Debug\net6.0\GymApi.pdb
 D:\Brenda usuario\Net\GymApi\obj\Debug\net6.0\GymApi.genruntimeconfig.cache
 D:\Brenda usuario\Net\GymApi\obj\Debug\net6.0\ref\GymApi.dll
+D:\Brenda usuario\Net\GymApi\bin\Debug\net6.0\BouncyCastle.Cryptography.dll
+D:\Brenda usuario\Net\GymApi\bin\Debug\net6.0\MailKit.dll
+D:\Brenda usuario\Net\GymApi\bin\Debug\net6.0\MimeKit.dll
+D:\Brenda usuario\Net\GymApi\bin\Debug\net6.0\System.Security.Cryptography.Pkcs.dll
+D:\Brenda usuario\Net\GymApi\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Security.Cryptography.Pkcs.dll

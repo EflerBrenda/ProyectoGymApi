@@ -15,7 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Http.Features;
 
-namespace InmobiliariaEfler.Api
+namespace GymApi.Api
 {
     [Route("api/[controller]")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -30,69 +30,74 @@ namespace InmobiliariaEfler.Api
             this.contexto = contexto;
             this.config = config;
         }
-        // GET: api/<controller>
-        [HttpGet]
-        public async Task<ActionResult<Usuario>> Get()
+        [HttpGet("ObtenerPlanes")]
+        public async Task<ActionResult<Plan>> ObtenerPlanes()
         {
             try
             {
-                var usuario = User.Identity.Name;
-                return Ok(await contexto.Usuario.Where(u => u.Email == usuario).Select(u => new
-                {
-                    Id = u.Id,
-                    Nombre = u.Nombre,
-                    Apellido = u.Apellido,
-                    Email = u.Email,
-                    Telefono = u.Telefono
-                }).SingleOrDefaultAsync()
-                );
-
+                return Ok(await contexto.Plan.Where(p => p.Activo == 1).ToListAsync());
             }
             catch (Exception ex)
             {
                 return BadRequest(ex);
             }
         }
-
-        [HttpPost("login")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login([FromForm] UsuarioLogin usuarioLogin)
+        [HttpPost("NuevoPlan")]
+        public async Task<IActionResult> Post([FromForm] Plan plan)
         {
             try
             {
-                string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                    password: usuarioLogin.Password,
-                    salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
-                    prf: KeyDerivationPrf.HMACSHA1,
-                    iterationCount: 1000,
-                    numBytesRequested: 256 / 8));
-
-                var u = await contexto.Usuario.FirstOrDefaultAsync(x => x.Email == usuarioLogin.Email);
-                if (u == null || u.Password != hashed)
+                if (ModelState.IsValid)
                 {
-                    return BadRequest("Nombre de usuario o clave incorrecta");
+                    plan.Activo = 1;
+                    contexto.Plan.Add(plan);
+                    await contexto.SaveChangesAsync();
+                    return Ok(plan);
                 }
-                else
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpDelete("BajaPlan")]
+        public async Task<IActionResult> Delete([FromForm] int idPlan)
+        {
+            try
+            {
+                if (ModelState.IsValid)
                 {
-                    var key = new SymmetricSecurityKey(
-                        System.Text.Encoding.ASCII.GetBytes(config["TokenAuthentication:SecretKey"]));
-                    var credenciales = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, u.Email),
-                        new Claim("FullName", u.Nombre + " " + u.Apellido),
-                        //new Claim(ClaimTypes.Role, "Profesor"),
-                    };
+                    var plan = contexto.Plan.Single(p => p.Id == idPlan);
+                    plan.Activo = 2;
+                    contexto.Plan.Update(plan);
+                    await contexto.SaveChangesAsync();
+                    return Ok(plan);
 
-                    var token = new JwtSecurityToken(
-                        issuer: config["TokenAuthentication:Issuer"],
-                        audience: config["TokenAuthentication:Audience"],
-                        claims: claims,
-                        expires: DateTime.Now.AddMinutes(60),
-                        signingCredentials: credenciales
-                    );
-                    return Ok(new JwtSecurityTokenHandler().WriteToken(token));
                 }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPut("EditarPlan")]
+        public async Task<IActionResult> Put([FromForm] Plan planEditado)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var planActual = contexto.Plan.Single(u => u.Id == planEditado.Id);
+                    planActual.Descripcion = planEditado.Descripcion;
+                    planActual.Precio = planEditado.Precio;
+                    contexto.Plan.Update(planActual);
+                    await contexto.SaveChangesAsync();
+                    return Ok(planActual);
+
+                }
+                return BadRequest();
             }
             catch (Exception ex)
             {

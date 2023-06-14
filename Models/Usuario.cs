@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 namespace GymApi.Models;
 
 public class Usuario
@@ -13,8 +14,10 @@ public class Usuario
     public string? Password { get; set; }
 
     [Display(Name = "Plan contratado")]
+    public int PlanId { get; set; }
 
-    public int? PlanId { get; set; }
+    [ForeignKey(nameof(PlanId))]
+    public Plan? Plan { get; set; }
 
     [Display(Name = "Fecha de inicio")]
     public DateTime? Fecha_plan_inicio { get; set; }
