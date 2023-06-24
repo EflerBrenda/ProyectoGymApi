@@ -41,16 +41,17 @@ namespace GymApi.Api
             try
             {
                 var usuario = User.Identity.Name;
-                return Ok(await contexto.Usuario.Where(u => u.Email == usuario).Select(u => new
-                {
-                    Id = u.Id,
-                    Nombre = u.Nombre,
-                    Apellido = u.Apellido,
-                    Email = u.Email,
-                    Telefono = u.Telefono,
-                    Plan = u.Plan
-                }).SingleOrDefaultAsync()
-                );
+                /* return Ok(await contexto.Usuario.Where(u => u.Email == usuario).Select(u => new
+                 {
+                     Id = u.Id,
+                     Nombre = u.Nombre,
+                     Apellido = u.Apellido,
+                     Email = u.Email,
+                     Telefono = u.Telefono,
+                     Plan = u.Plan
+                 }).SingleOrDefaultAsync()
+                 );*/
+                return Ok(contexto.Usuario.Single(u => u.Email == usuario));
 
             }
             catch (Exception ex)
