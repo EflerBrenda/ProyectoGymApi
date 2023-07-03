@@ -43,7 +43,7 @@ namespace GymApi.Api
             }
         }
         [HttpPost("NuevaRutina")]
-        public async Task<IActionResult> Post([FromForm] Rutina nuevaRutina)
+        public async Task<IActionResult> Post([FromBody] Rutina nuevaRutina)
         {
             try
             {
@@ -62,14 +62,14 @@ namespace GymApi.Api
                 return BadRequest(ex.Message);
             }
         }
-        [HttpDelete("BajaRutina")]
-        public async Task<IActionResult> Delete([FromForm] int idRutina)
+        [HttpDelete("BajaRutina/{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    var rutina = contexto.Rutina.Single(r => r.Id == idRutina);
+                    var rutina = contexto.Rutina.Single(r => r.Id == id);
                     rutina.Activo = 2;
                     contexto.Rutina.Update(rutina);
                     await contexto.SaveChangesAsync();
@@ -84,7 +84,7 @@ namespace GymApi.Api
             }
         }
         [HttpPut("EditarRutina")]
-        public async Task<IActionResult> Put([FromForm] Rutina rutinaEditado)
+        public async Task<IActionResult> Put([FromBody] Rutina rutinaEditado)
         {
             try
             {

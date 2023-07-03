@@ -51,7 +51,7 @@ namespace GymApi.Api
                      Plan = u.Plan
                  }).SingleOrDefaultAsync()
                  );*/
-                return Ok(contexto.Usuario.Single(u => u.Email == usuario));
+                return Ok(contexto.Usuario.Include(p => p.Plan).Single(u => u.Email == usuario));
 
             }
             catch (Exception ex)
@@ -137,9 +137,10 @@ namespace GymApi.Api
                         issuer: config["TokenAuthentication:Issuer"],
                         audience: config["TokenAuthentication:Audience"],
                         claims: claims,
-                        expires: DateTime.Now.AddMinutes(60),
+                        expires: DateTime.Now.AddMinutes(120),
                         signingCredentials: credenciales
                     );
+
                     return Ok(new JwtSecurityTokenHandler().WriteToken(token));
                 }
             }
@@ -148,15 +149,15 @@ namespace GymApi.Api
                 return BadRequest(ex.Message);
             }
         }
-        [HttpPost("NuevoUsuario")]
-        public async Task<IActionResult> Post([FromForm] Usuario usuario)
+        [HttpPost("NuevoAlumno")]
+        public async Task<IActionResult> Post([FromBody] Usuario usuario)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
                     string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                    password: usuario.Password,
+                    password: usuario.Apellido.ToLower() + "123",
                     salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
                     prf: KeyDerivationPrf.HMACSHA1,
                     iterationCount: 1000,
@@ -166,6 +167,7 @@ namespace GymApi.Api
                     usuario.Fecha_plan_inicio = DateTime.Today;
                     usuario.Fecha_plan_fin = DateTime.Today.AddMonths(1);
                     usuario.Plan = contexto.Plan.Single(p => p.Id == usuario.PlanId);
+                    usuario.RolId = 3;
                     contexto.Usuario.Add(usuario);
                     await contexto.SaveChangesAsync();
                     return Ok(usuario);
@@ -177,14 +179,14 @@ namespace GymApi.Api
                 return BadRequest(ex.Message);
             }
         }
-        [HttpDelete("BajaUsuario")]
-        public async Task<IActionResult> Delete([FromForm] int idUsuario)
+        [HttpDelete("BajaAlumno/{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    var usuario = contexto.Usuario.Single(u => u.Id == idUsuario);
+                    var usuario = contexto.Usuario.Single(u => u.Id == id);
                     usuario.Fecha_plan_fin = DateTime.Today;
                     usuario.Activo = 2;
                     contexto.Usuario.Update(usuario);
@@ -199,8 +201,8 @@ namespace GymApi.Api
                 return BadRequest(ex.Message);
             }
         }
-        [HttpPut("EditarUsuario")]
-        public async Task<IActionResult> Put([FromForm] Usuario usuarioEditado)
+        [HttpPut("EditarAlumno")]
+        public async Task<IActionResult> Put([FromBody] Usuario usuarioEditado)
         {
             try
             {
@@ -211,6 +213,7 @@ namespace GymApi.Api
                     usuarioActual.Apellido = usuarioEditado.Apellido;
                     usuarioActual.Telefono = usuarioEditado.Telefono;
                     usuarioActual.Email = usuarioEditado.Email;
+                    usuarioActual.PlanId = usuarioEditado.PlanId;
                     contexto.Usuario.Update(usuarioActual);
                     await contexto.SaveChangesAsync();
                     return Ok(usuarioActual);
@@ -291,7 +294,6 @@ namespace GymApi.Api
                 if (ModelState.IsValid)
                 {
                     habilitarRutina.Alumno = contexto.Usuario.Single(x => x.Id == habilitarRutina.AlumnoId);
-                    habilitarRutina.Profesor = contexto.Usuario.Single(x => x.Id == habilitarRutina.ProfesorId);
                     habilitarRutina.Rutina = contexto.Rutina.Single(x => x.Id == habilitarRutina.RutinaId);
                     habilitarRutina.Activo = 1;
                     habilitarRutina.Fecha_inicio_rutina = DateTime.Today;

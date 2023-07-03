@@ -43,7 +43,7 @@ namespace GymApi.Api
             }
         }
         [HttpPost("NuevoPlan")]
-        public async Task<IActionResult> Post([FromForm] Plan plan)
+        public async Task<IActionResult> Post([FromBody] Plan plan)
         {
             try
             {
@@ -61,14 +61,14 @@ namespace GymApi.Api
                 return BadRequest(ex.Message);
             }
         }
-        [HttpDelete("BajaPlan")]
-        public async Task<IActionResult> Delete([FromForm] int idPlan)
+        [HttpDelete("BajaPlan/{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    var plan = contexto.Plan.Single(p => p.Id == idPlan);
+                    var plan = contexto.Plan.Single(p => p.Id == id);
                     plan.Activo = 2;
                     contexto.Plan.Update(plan);
                     await contexto.SaveChangesAsync();
@@ -83,7 +83,7 @@ namespace GymApi.Api
             }
         }
         [HttpPut("EditarPlan")]
-        public async Task<IActionResult> Put([FromForm] Plan planEditado)
+        public async Task<IActionResult> Put([FromBody] Plan planEditado)
         {
             try
             {
@@ -92,6 +92,7 @@ namespace GymApi.Api
                     var planActual = contexto.Plan.Single(u => u.Id == planEditado.Id);
                     planActual.Descripcion = planEditado.Descripcion;
                     planActual.Precio = planEditado.Precio;
+                    planActual.Dias_mes = planEditado.Dias_mes;
                     contexto.Plan.Update(planActual);
                     await contexto.SaveChangesAsync();
                     return Ok(planActual);

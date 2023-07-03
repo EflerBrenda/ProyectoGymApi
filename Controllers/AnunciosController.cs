@@ -36,7 +36,7 @@ namespace GymApi.Api
         {
             try
             {
-                return Ok(await contexto.Anuncio.Include(u => u.Profesor).Where(a => a.Activo == 1).ToListAsync());
+                return Ok(await contexto.Anuncio.Include(u => u.Profesor).Where(a => a.Activo == 1).OrderByDescending(a => a.Fecha_anuncio).ToListAsync());
             }
             catch (Exception ex)
             {
@@ -44,15 +44,15 @@ namespace GymApi.Api
             }
         }
         [HttpPost("NuevoAnuncio")]
-        public async Task<IActionResult> Post([FromForm] EditarAnuncio nuevoAnuncio)
+        public async Task<IActionResult> Post([FromBody] Anuncio a)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
                     var anuncio = new Anuncio();
-                    anuncio.Descripcion = nuevoAnuncio.Descripcion;
-                    anuncio.Profesor = contexto.Usuario.Single(p => p.Id == nuevoAnuncio.ProfesorId);
+                    anuncio.Descripcion = a.Descripcion;
+                    anuncio.Profesor = contexto.Usuario.Single(p => p.Id == a.ProfesorId);
                     anuncio.Activo = 1;
                     anuncio.Fecha_anuncio = DateTime.Today;
                     contexto.Anuncio.Add(anuncio);
@@ -66,14 +66,14 @@ namespace GymApi.Api
                 return BadRequest(ex.Message);
             }
         }
-        [HttpDelete("BajaAnuncio")]
-        public async Task<IActionResult> Delete([FromForm] int idAnuncio)
+        [HttpDelete("BajaAnuncio/{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    var anuncio = contexto.Anuncio.Single(u => u.Id == idAnuncio);
+                    var anuncio = contexto.Anuncio.Single(u => u.Id == id);
                     anuncio.Activo = 2;
                     contexto.Anuncio.Update(anuncio);
                     await contexto.SaveChangesAsync();
@@ -88,7 +88,7 @@ namespace GymApi.Api
             }
         }
         [HttpPut("EditarAnuncio")]
-        public async Task<IActionResult> Put([FromForm] EditarAnuncio anuncioEditado)
+        public async Task<IActionResult> Put([FromBody] Anuncio anuncioEditado)
         {
             try
             {
@@ -96,7 +96,7 @@ namespace GymApi.Api
                 {
                     var anuncioActual = contexto.Anuncio.Single(u => u.Id == anuncioEditado.Id);
                     anuncioActual.Descripcion = anuncioEditado.Descripcion;
-                    anuncioActual.Profesor = contexto.Usuario.Single(p => p.Id == anuncioEditado.ProfesorId);
+                    //anuncioActual.Profesor = contexto.Usuario.Single(p => p.Id == anuncioEditado.ProfesorId);
                     contexto.Anuncio.Update(anuncioActual);
                     await contexto.SaveChangesAsync();
                     return Ok(anuncioActual);

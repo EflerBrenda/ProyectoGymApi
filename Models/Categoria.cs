@@ -1,11 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 namespace GymApi.Models;
 
-public class Plan
+public class Categoria
 {
     public int Id { get; set; }
     public String Descripcion { get; set; }
-    public Decimal Precio { get; set; }
-    public int Dias_mes { get; set; }
-    public int? Activo { get; set; }
+
 }

@@ -42,14 +42,25 @@ namespace GymApi.Api
                 return BadRequest(ex);
             }
         }
+        [HttpGet("EjerciciosPorCategorias/{id}")]
+        public async Task<ActionResult<Ejercicio>> EjerciciosPorCategorias(int id)
+        {
+            try
+            {
+                return Ok(await contexto.Ejercicio.Include(c => c.Categoria).Where(e => e.CategoriaId == id && e.Activo == 1).ToListAsync());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
         [HttpPost("NuevoEjercicio")]
-        public async Task<IActionResult> Post([FromForm] Ejercicio nuevoEjercicio)
+        public async Task<IActionResult> Post([FromBody] Ejercicio ejercicio)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    var ejercicio = nuevoEjercicio;
                     ejercicio.Activo = 1;
                     contexto.Ejercicio.Add(ejercicio);
                     await contexto.SaveChangesAsync();
@@ -62,14 +73,14 @@ namespace GymApi.Api
                 return BadRequest(ex.Message);
             }
         }
-        [HttpDelete("BajaEjercicio")]
-        public async Task<IActionResult> Delete([FromForm] int idEjercicio)
+        [HttpDelete("BajaEjercicio/{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    var ejercicio = contexto.Ejercicio.Single(e => e.Id == idEjercicio);
+                    var ejercicio = contexto.Ejercicio.Single(e => e.Id == id);
                     ejercicio.Activo = 2;
                     contexto.Ejercicio.Update(ejercicio);
                     await contexto.SaveChangesAsync();
@@ -84,7 +95,7 @@ namespace GymApi.Api
             }
         }
         [HttpPut("EditarEjercicio")]
-        public async Task<IActionResult> Put([FromForm] Ejercicio ejercicioEditado)
+        public async Task<IActionResult> Put([FromBody] Ejercicio ejercicioEditado)
         {
             try
             {
@@ -93,6 +104,7 @@ namespace GymApi.Api
                     var ejercicioActual = contexto.Ejercicio.Single(e => e.Id == ejercicioEditado.Id);
                     ejercicioActual.Descripcion = ejercicioEditado.Descripcion;
                     ejercicioActual.Explicacion = ejercicioEditado.Explicacion;
+                    ejercicioActual.CategoriaId = ejercicioEditado.CategoriaId;
                     contexto.Ejercicio.Update(ejercicioActual);
                     await contexto.SaveChangesAsync();
                     return Ok(ejercicioActual);

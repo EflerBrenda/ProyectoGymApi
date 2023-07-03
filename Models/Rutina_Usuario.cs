@@ -8,9 +8,6 @@ public class Rutina_Usuario
     public int RutinaId { get; set; }
     [ForeignKey(nameof(RutinaId))]
     public Rutina? Rutina { get; set; }
-    public int ProfesorId { get; set; }
-    [ForeignKey(nameof(ProfesorId))]
-    public Usuario? Profesor { get; set; }
 
     public int AlumnoId { get; set; }
     [ForeignKey(nameof(AlumnoId))]
