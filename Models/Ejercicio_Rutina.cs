@@ -16,5 +16,7 @@ public class Ejercicio_Rutina
 
     public int repeticiones { get; set; }
 
+    public int dia { get; set; }
+
     public int? Activo { get; set; }
 }

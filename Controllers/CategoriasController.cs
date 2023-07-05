@@ -42,18 +42,20 @@ namespace GymApi.Api
                 return BadRequest(ex);
             }
         }
-        /*[HttpGet("CantidadCategorias")]
-        public async Task<ActionResult> CantidadCategorias()
+        [HttpGet("ObtenerCategoriasDia/{dia}")]
+        public async Task<ActionResult<Categoria>> ObtenerCategoriasDias(int dia)
         {
             try
             {
-                return Ok(contexto.Categoria.Count());
+                //var ejercicioRutinas = contexto.Ejercicio_Rutina.Include(e => e.Ejercicio.Categoria).Where(er => er.dia == dia);
+                var Categorias = contexto.Categoria.FromSql($"SELECT DISTINCT (c.id),c.descripcion FROM categoria c INNER JOIN ejercicio e ON e.categoriaId= c.id INNER JOIN ejercicio_rutina er ON er.ejercicioid= e.id WHERE er.dia={dia}");
+                return Ok(Categorias);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex);
             }
-        }*/
+        }
 
     }
 }

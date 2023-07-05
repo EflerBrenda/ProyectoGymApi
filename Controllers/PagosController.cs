@@ -14,6 +14,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Http.Features;
+using MercadoPago.Client.Preference;
+using MercadoPago.Resource.Preference;
+using MercadoPago.Client.PaymentMethod;
+using MercadoPago.Http;
+using MercadoPago;
+using System.ComponentModel;
 
 namespace GymApi.Api
 {
@@ -31,22 +37,31 @@ namespace GymApi.Api
             this.config = config;
         }
         // GET: api/<controller>
-        [HttpGet]
-        public async Task<ActionResult<Usuario>> Get()
+        [HttpGet("GenerarLinkPago")]
+        public async Task<ActionResult<String>> Get()
         {
             try
             {
                 var usuario = User.Identity.Name;
-                return Ok(await contexto.Usuario.Where(u => u.Email == usuario).Select(u => new
-                {
-                    Id = u.Id,
-                    Nombre = u.Nombre,
-                    Apellido = u.Apellido,
-                    Email = u.Email,
-                    Telefono = u.Telefono
-                }).SingleOrDefaultAsync()
-                );
+                IDictionary<string, object> metadata = new Dictionary<string, object>();
+                metadata.Add("userid", usuario);
 
+                var request = new PreferenceRequest
+                {
+                    Items = new List<PreferenceItemRequest>{
+                        new PreferenceItemRequest{
+                            Title = "cuota mes julio", //Producto a cobrar
+                            Quantity = 1,
+                            CurrencyId = "ARS",
+                            UnitPrice = 100,
+                        }
+                    },
+                    Metadata = metadata,
+                    // NotificationUrl = "https://793d-170-150-8-5.ngrok-free.app/api/pagos/NotificacionMP"
+                };
+                var client = new PreferenceClient();
+                Preference preference = await client.CreateAsync(request);
+                return Ok(preference.InitPoint);
             }
             catch (Exception ex)
             {
@@ -54,49 +69,70 @@ namespace GymApi.Api
             }
         }
 
-        [HttpPost("login")]
+        [HttpPost("NotificacionMP")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login([FromForm] UsuarioLogin usuarioLogin)
+        //public async Task<IActionResult> NotificacionMP([FromQuery] String type, [FromQuery] String id)
+        public async Task<IActionResult> NotificacionMP([FromBody] PagoMP body)//[FromBody] Object body
         {
             try
             {
-                string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                    password: usuarioLogin.Password,
-                    salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
-                    prf: KeyDerivationPrf.HMACSHA1,
-                    iterationCount: 1000,
-                    numBytesRequested: 256 / 8));
-
-                var u = await contexto.Usuario.FirstOrDefaultAsync(x => x.Email == usuarioLogin.Email);
-                if (u == null || u.Password != hashed)
-                {
-                    return BadRequest("Nombre de usuario o clave incorrecta");
-                }
-                else
-                {
-                    var key = new SymmetricSecurityKey(
-                        System.Text.Encoding.ASCII.GetBytes(config["TokenAuthentication:SecretKey"]));
-                    var credenciales = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-                    var claims = new List<Claim>
+                /* String type = HttpContext.Request.Query["type"];
+                 String id = HttpContext.Request.Query["id"];
+                 String topic = HttpContext.Request.Query["topic"];
+                Console.WriteLine("body:" + body.Data.Id);
+                Console.WriteLine("body:" + body.Type);
+                   foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(pagoMercado))
                     {
-                        new Claim(ClaimTypes.Name, u.Email),
-                        new Claim("FullName", u.Nombre + " " + u.Apellido),
-                        //new Claim(ClaimTypes.Role, "Profesor"),
-                    };
+                        string name = descriptor.Name;
+                        object value = descriptor.GetValue(pagoMercado);
+                        Console.WriteLine("{0}={1}", name, value);
+                    }
+                */
 
-                    var token = new JwtSecurityToken(
-                        issuer: config["TokenAuthentication:Issuer"],
-                        audience: config["TokenAuthentication:Audience"],
-                        claims: claims,
-                        expires: DateTime.Now.AddMinutes(60),
-                        signingCredentials: credenciales
-                    );
-                    return Ok(new JwtSecurityTokenHandler().WriteToken(token));
+                if (body.Action.Equals("payment.created") && body.Type.Equals("payment"))
+                {
+                    MercadoPago.Client.Payment.PaymentClient pago = new MercadoPago.Client.Payment.PaymentClient();
+                    MercadoPago.Resource.Payment.Payment pagoMercado = pago.Get(body.Data.Id);
+
+                    if (pagoMercado.Status.Equals("approved") && pagoMercado.StatusDetail.Equals("accredited"))
+                    {
+                        //
+                        //Guardar en la base de datos
+                        Console.WriteLine(body.Data.Id);
+                        Console.WriteLine(pagoMercado.Metadata["userid"].ToString());
+                        Console.WriteLine(body.Type);
+                    }
                 }
+
+                //Console.WriteLine(id);
+                /*if (!String.IsNullOrEmpty(id))
+                {
+                    //Payment pago= new PreferencePaymentTypeRequest();
+                    MercadoPago.Client.Payment.PaymentClient pago = new MercadoPago.Client.Payment.PaymentClient();
+                    MercadoPago.Resource.Payment.Payment pagoMercado = pago.Get(1313716952);
+                    Console.WriteLine(pagoMercado.Status);
+                }
+                if (type == "payment" || topic == "payment")
+                {
+
+                    //Console.WriteLine(pagoMercado.Status);
+                    Console.WriteLine("--------------------------------------");
+                    Console.WriteLine("--------------------------------------");
+                    Console.WriteLine(type);
+                    Console.WriteLine("--------------------------------------");
+                    Console.WriteLine(topic);
+                    //Payment pago= new PreferencePaymentTypeRequest();
+                    // MercadoPago.Client.Payment.PaymentClient pago = new MercadoPago.Client.Payment.PaymentClient();
+                    // MercadoPago.Resource.Payment.Payment pagoMercado = pago.Get(long.Parse(id));
+                    // Console.WriteLine(pagoMercado);
+                }*/
+
+                return Ok();
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                Console.WriteLine(ex.Message);
+                return Ok();
             }
         }
     }

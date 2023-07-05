@@ -144,3 +144,5 @@ D:\Brenda usuario\Net\GymApi\bin\Debug\net6.0\MailKit.dll
 D:\Brenda usuario\Net\GymApi\bin\Debug\net6.0\MimeKit.dll
 D:\Brenda usuario\Net\GymApi\bin\Debug\net6.0\System.Security.Cryptography.Pkcs.dll
 D:\Brenda usuario\Net\GymApi\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Security.Cryptography.Pkcs.dll
+D:\Brenda usuario\Net\GymApi\bin\Debug\net6.0\MercadoPago.dll
+D:\Brenda usuario\Net\GymApi\bin\Debug\net6.0\Newtonsoft.Json.dll

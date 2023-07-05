@@ -42,6 +42,62 @@ namespace GymApi.Api
                 return BadRequest(ex);
             }
         }
+        [HttpGet("ObtenerEjerciciosRutinas")]
+        public async Task<ActionResult<Ejercicio_Rutina>> ObtenerEjerciciosRutinas()
+        {
+            try
+            {
+                return Ok(await contexto.Ejercicio_Rutina.Include(r => r.Rutina).Include(e => e.Ejercicio).Where(a => a.Activo == 1).ToListAsync());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+        [HttpGet("ObtenerRutinaEjerciciosUsuario")]
+        public async Task<ActionResult<Ejercicio_Rutina>> ObtenerRutinaEjerciciosUsuario()
+        {
+            try
+            {
+                var rutina = contexto.Rutina_Usuario.Include(r => r.Rutina).Include(a => a.Alumno).Single(u => u.Alumno.Email == User.Identity.Name);
+                //return Ok(await contexto.Ejercicio_Rutina.Include(r => r.Rutina).Include(e => e.Ejercicio).Where(a => a.Activo == 1 && a.Rutina.Id == rutina.RutinaId && a.Ejercicio.CategoriaId == ejercicioRutina.Ejercicio.CategoriaId).ToListAsync());
+                //return Ok(contexto.Ejercicio_Rutina.FromSqlInterpolated($"SELECT * FROM ejercicio_rutina er INNER JOIN rutina AS r ON er.rutinaid = r.id INNER JOIN ejercicio AS e ON er.ejercicioid = e.id WHERE (er.activo = {1}) AND (r.id = {rutina.RutinaId}) AND (er.dia ={dia}) AND (e.categoriaId ={categoriaId})"));
+                return Ok(await contexto.Ejercicio_Rutina.Include(r => r.Rutina).Include(e => e.Ejercicio).Where(a => a.Activo == 1 && a.Rutina.Id == rutina.RutinaId).ToListAsync());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+
+        [HttpGet("ObtenerCantDiasRutina")]
+        public async Task<ActionResult<List<int>>> ObtenerCantDiasRutina()
+        {
+            try
+            {
+                var usuario = contexto.Usuario.Include(p => p.Plan).Single(u => u.Email == User.Identity.Name);
+                var cdplan = usuario.Plan.Dias_mes / 4;
+                List<int> lista = new List<int>();
+
+                if (cdplan == 2)
+                {
+                    lista = obtenerLista(cdplan);
+                }
+                else if (cdplan == 3)
+                {
+                    lista = obtenerLista(cdplan);
+                }
+                else if (cdplan == 5)
+                {
+                    lista = obtenerLista(cdplan);
+                }
+                return Ok(lista);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
         [HttpPost("NuevaRutina")]
         public async Task<IActionResult> Post([FromBody] Rutina nuevaRutina)
         {
@@ -103,6 +159,18 @@ namespace GymApi.Api
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        public List<int> obtenerLista(int dias)
+        {
+            int iteracion = 1;
+            List<int> resultado = new List<int>();
+            for (int i = 0; i < dias; i++)
+            {
+                resultado.Add(iteracion);
+                iteracion++;
+            }
+            return (resultado);
         }
     }
 }

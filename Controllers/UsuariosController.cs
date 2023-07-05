@@ -40,7 +40,7 @@ namespace GymApi.Api
         {
             try
             {
-                var usuario = User.Identity.Name;
+
                 /* return Ok(await contexto.Usuario.Where(u => u.Email == usuario).Select(u => new
                  {
                      Id = u.Id,
@@ -51,6 +51,7 @@ namespace GymApi.Api
                      Plan = u.Plan
                  }).SingleOrDefaultAsync()
                  );*/
+                var usuario = User.Identity.Name;
                 return Ok(contexto.Usuario.Include(p => p.Plan).Single(u => u.Email == usuario));
 
             }

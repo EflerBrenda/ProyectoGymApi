@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using GymApi.Models;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using MercadoPago.Config;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -97,5 +99,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+MercadoPagoConfig.AccessToken = "TEST-8311172502624981-070420-dbe63d907edfe56a90e4f362680d1907-1414468349";
 
 app.Run();
