@@ -38,22 +38,23 @@ namespace GymApi.Api
         }
         // GET: api/<controller>
         [HttpGet("GenerarLinkPago")]
-        public async Task<ActionResult<String>> Get()
+        public async Task<ActionResult<PagoUrl>> Get()
         {
             try
             {
-                var usuario = User.Identity.Name;
+                var email = User.Identity.Name;
+                var usuario = contexto.Usuario.Include(p => p.Plan).Single(u => u.Email == email);
                 IDictionary<string, object> metadata = new Dictionary<string, object>();
-                metadata.Add("userid", usuario);
+                metadata.Add("userid", usuario.Id);
 
                 var request = new PreferenceRequest
                 {
                     Items = new List<PreferenceItemRequest>{
                         new PreferenceItemRequest{
-                            Title = "cuota mes julio", //Producto a cobrar
+                            Title = usuario.Plan.Descripcion, //Producto a cobrar
                             Quantity = 1,
                             CurrencyId = "ARS",
-                            UnitPrice = 100,
+                            UnitPrice = usuario.Plan.Precio,
                         }
                     },
                     Metadata = metadata,
@@ -61,7 +62,9 @@ namespace GymApi.Api
                 };
                 var client = new PreferenceClient();
                 Preference preference = await client.CreateAsync(request);
-                return Ok(preference.InitPoint);
+                PagoUrl url = new PagoUrl();
+                url.URL = preference.InitPoint;
+                return Ok(url);
             }
             catch (Exception ex)
             {
@@ -71,23 +74,12 @@ namespace GymApi.Api
 
         [HttpPost("NotificacionMP")]
         [AllowAnonymous]
-        //public async Task<IActionResult> NotificacionMP([FromQuery] String type, [FromQuery] String id)
-        public async Task<IActionResult> NotificacionMP([FromBody] PagoMP body)//[FromBody] Object body
+
+        public async Task<IActionResult> NotificacionMP([FromBody] PagoMP body)
         {
             try
             {
-                /* String type = HttpContext.Request.Query["type"];
-                 String id = HttpContext.Request.Query["id"];
-                 String topic = HttpContext.Request.Query["topic"];
-                Console.WriteLine("body:" + body.Data.Id);
-                Console.WriteLine("body:" + body.Type);
-                   foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(pagoMercado))
-                    {
-                        string name = descriptor.Name;
-                        object value = descriptor.GetValue(pagoMercado);
-                        Console.WriteLine("{0}={1}", name, value);
-                    }
-                */
+
 
                 if (body.Action.Equals("payment.created") && body.Type.Equals("payment"))
                 {
@@ -96,36 +88,20 @@ namespace GymApi.Api
 
                     if (pagoMercado.Status.Equals("approved") && pagoMercado.StatusDetail.Equals("accredited"))
                     {
-                        //
-                        //Guardar en la base de datos
-                        Console.WriteLine(body.Data.Id);
-                        Console.WriteLine(pagoMercado.Metadata["userid"].ToString());
-                        Console.WriteLine(body.Type);
+
+                        Pago p = new Pago();
+                        p.UsuarioId = int.Parse(pagoMercado.Metadata["userid"].ToString());
+                        p.Descripcion = "Cuota del mes";
+                        p.Fecha_Pago = DateTime.Today;
+                        p.Nro_Transaccion = body.Data.Id.ToString();
+                        contexto.Pago.Add(p);
+                        await contexto.SaveChangesAsync();
+                        Console.WriteLine("Pago OK");
+
                     }
                 }
 
-                //Console.WriteLine(id);
-                /*if (!String.IsNullOrEmpty(id))
-                {
-                    //Payment pago= new PreferencePaymentTypeRequest();
-                    MercadoPago.Client.Payment.PaymentClient pago = new MercadoPago.Client.Payment.PaymentClient();
-                    MercadoPago.Resource.Payment.Payment pagoMercado = pago.Get(1313716952);
-                    Console.WriteLine(pagoMercado.Status);
-                }
-                if (type == "payment" || topic == "payment")
-                {
 
-                    //Console.WriteLine(pagoMercado.Status);
-                    Console.WriteLine("--------------------------------------");
-                    Console.WriteLine("--------------------------------------");
-                    Console.WriteLine(type);
-                    Console.WriteLine("--------------------------------------");
-                    Console.WriteLine(topic);
-                    //Payment pago= new PreferencePaymentTypeRequest();
-                    // MercadoPago.Client.Payment.PaymentClient pago = new MercadoPago.Client.Payment.PaymentClient();
-                    // MercadoPago.Resource.Payment.Payment pagoMercado = pago.Get(long.Parse(id));
-                    // Console.WriteLine(pagoMercado);
-                }*/
 
                 return Ok();
             }
@@ -135,5 +111,12 @@ namespace GymApi.Api
                 return Ok();
             }
         }
+        [HttpGet("ObtenerPagos")]
+        public async Task<ActionResult<List<Pago>>> ObtenerPagos()
+        {
+            var usuario = User.Identity.Name;
+            return Ok(await contexto.Pago.Where(u => u.Usuario.Email == usuario).ToListAsync());
+        }
+
     }
 }

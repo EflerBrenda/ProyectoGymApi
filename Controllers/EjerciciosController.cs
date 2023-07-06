@@ -42,12 +42,37 @@ namespace GymApi.Api
                 return BadRequest(ex);
             }
         }
-        [HttpGet("EjerciciosPorCategorias/{id}")]
-        public async Task<ActionResult<Ejercicio>> EjerciciosPorCategorias(int id)
+        [HttpGet("EjerciciosPorCategorias/{iddd}")]
+        public async Task<ActionResult<Ejercicio>> EjerciciosPorCategorias(int iddd)
         {
             try
             {
-                return Ok(await contexto.Ejercicio.Include(c => c.Categoria).Where(e => e.CategoriaId == id && e.Activo == 1).ToListAsync());
+                return Ok(await contexto.Ejercicio.Include(c => c.Categoria).Where(e => e.CategoriaId == iddd && e.Activo == 1).ToListAsync());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+        [HttpGet("EjerciciosRutinaPorCategorias/{Categoriaid}")]
+        public async Task<ActionResult<Ejercicio_Rutina>> EjerciciosRutinaPorCategorias(int Categoriaid)
+        {
+            try
+            {
+                return Ok(await contexto.Ejercicio_Rutina.Include(e => e.Ejercicio.Categoria).Where(e => e.Ejercicio.CategoriaId == Categoriaid && e.Activo == 1).OrderBy(e => e.EjercicioId).GroupBy(e => e.EjercicioId).Select(g => g.First()).ToListAsync());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+        [HttpGet("EjerciciosRutinaPorCategoriasRutina/{Categoriaid}/{RutinaId}")]
+        public async Task<ActionResult<Ejercicio_Rutina>> EjerciciosRutinaPorCategoriasRutina(int Categoriaid, int RutinaId)
+        {
+            try
+            {
+                var ejercicio_Rutina = await contexto.Ejercicio_Rutina.Include(e => e.Ejercicio.Categoria).Include(r => r.Rutina).Where(e => e.Ejercicio.CategoriaId == Categoriaid && e.Activo == 1 && e.RutinaId == RutinaId).OrderBy(e => e.EjercicioId).GroupBy(e => e.EjercicioId).Select(g => g.First()).ToListAsync();
+                return Ok(ejercicio_Rutina);
             }
             catch (Exception ex)
             {

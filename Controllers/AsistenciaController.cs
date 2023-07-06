@@ -63,13 +63,6 @@ namespace GymApi.Api
                             return BadRequest("Ya pusiste presente.");
                         }
                     }
-
-                    //int count= contexto.Asistencia.Include(u => u.Usuario).Where(u => u.Usuario.Email == email).Count();
-
-                    /* if(count >= usuario.Plan.Dias_mes)
-                     {
-                         return BadRequest("Ya pusiste presente.");
-                     }*/
                     var asistencia = new Asistencia();
                     asistencia.Fecha_asistencia = DateTime.Today;
                     asistencia.Hora_asistencia = DateTime.Now.ToShortTimeString();
@@ -85,32 +78,6 @@ namespace GymApi.Api
                 return BadRequest(ex.Message);
             }
         }
-        /* [HttpGet("ObtenerCantidadAsistencia")]
-         public async Task<ActionResult<int>> ObtenerCantidadAsistencia()
-         {
-             try
-             {
-                 if (ModelState.IsValid)
-                 {
-                     var email = User.Identity.Name;
-
-                     var usuario= contexto.Usuario.Include(p => p.Plan).Single(u => u.Email == email);
-                     int count= contexto.Asistencia.Include(u => u.Usuario).Where(u => u.Usuario.Email == email).Count();
-
-                     if(count <= usuario.Plan.Dias_mes)
-                     {
-
-                     }
-
-                     return Ok();
-                 }
-                 return BadRequest();
-             }
-             catch (Exception ex)
-             {
-                 return BadRequest(ex.Message);
-             }
-         }*/
 
     }
 }

@@ -42,13 +42,25 @@ namespace GymApi.Api
                 return BadRequest(ex);
             }
         }
-        [HttpGet("ObtenerCategoriasDia/{dia}")]
-        public async Task<ActionResult<Categoria>> ObtenerCategoriasDias(int dia)
+        [HttpGet("ObtenerCategoriasDia/{diaaa}")]
+        public async Task<ActionResult<Categoria>> ObtenerCategoriasDias(int diaaa)
         {
             try
             {
-                //var ejercicioRutinas = contexto.Ejercicio_Rutina.Include(e => e.Ejercicio.Categoria).Where(er => er.dia == dia);
-                var Categorias = contexto.Categoria.FromSql($"SELECT DISTINCT (c.id),c.descripcion FROM categoria c INNER JOIN ejercicio e ON e.categoriaId= c.id INNER JOIN ejercicio_rutina er ON er.ejercicioid= e.id WHERE er.dia={dia}");
+                var Categorias = await contexto.Categoria.FromSql($"SELECT DISTINCT (c.id),c.descripcion FROM categoria c INNER JOIN ejercicio e ON e.categoriaId= c.id INNER JOIN ejercicio_rutina er ON er.ejercicioid= e.id WHERE er.dia={diaaa}").ToListAsync();
+                return Ok(Categorias);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+        [HttpGet("ObtenerCategoriasDiasRutina/{diaa}/{idd}")]
+        public async Task<ActionResult<Categoria>> ObtenerCategoriasDiasRutina(int diaa, int idd)
+        {
+            try
+            {
+                var Categorias = await contexto.Categoria.FromSql($"SELECT DISTINCT (c.id),c.descripcion FROM categoria c INNER JOIN ejercicio e ON e.categoriaId= c.id INNER JOIN ejercicio_rutina er ON er.ejercicioid= e.id INNER JOIN rutina r ON er.rutinaid= r.id WHERE er.dia={diaa} && er.rutinaId ={idd} && r.activo=1 && er.activo=1").ToListAsync();
                 return Ok(Categorias);
             }
             catch (Exception ex)

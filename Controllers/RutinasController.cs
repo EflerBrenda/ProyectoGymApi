@@ -30,6 +30,18 @@ namespace GymApi.Api
             this.contexto = contexto;
             this.config = config;
         }
+        [HttpGet("ObtenerMiRutina")]
+        public async Task<ActionResult<Rutina_Usuario>> ObtenerMiRutina(int id)
+        {
+            try
+            {
+                return Ok(contexto.Rutina_Usuario.Include(ur => ur.Rutina).Single(a => a.Activo == 1 && a.Alumno.Email == User.Identity.Name));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
         [HttpGet("ObtenerRutinas")]
         public async Task<ActionResult<Rutina>> ObtenerRutinas()
         {
@@ -42,12 +54,12 @@ namespace GymApi.Api
                 return BadRequest(ex);
             }
         }
-        [HttpGet("ObtenerEjerciciosRutinas")]
-        public async Task<ActionResult<Ejercicio_Rutina>> ObtenerEjerciciosRutinas()
+        [HttpGet("ObtenerEjerciciosRutinas/{id}")]
+        public async Task<ActionResult<Ejercicio_Rutina>> ObtenerEjerciciosRutinas(int id)
         {
             try
             {
-                return Ok(await contexto.Ejercicio_Rutina.Include(r => r.Rutina).Include(e => e.Ejercicio).Where(a => a.Activo == 1).ToListAsync());
+                return Ok(await contexto.Ejercicio_Rutina.Include(r => r.Rutina).Include(e => e.Ejercicio).Where(a => a.Activo == 1 && a.RutinaId == id).ToListAsync());
             }
             catch (Exception ex)
             {
@@ -55,14 +67,19 @@ namespace GymApi.Api
             }
         }
         [HttpGet("ObtenerRutinaEjerciciosUsuario")]
-        public async Task<ActionResult<Ejercicio_Rutina>> ObtenerRutinaEjerciciosUsuario()
+        public async Task<ActionResult<List<Ejercicio_Rutina>>> ObtenerRutinaEjerciciosUsuario()
         {
             try
             {
-                var rutina = contexto.Rutina_Usuario.Include(r => r.Rutina).Include(a => a.Alumno).Single(u => u.Alumno.Email == User.Identity.Name);
-                //return Ok(await contexto.Ejercicio_Rutina.Include(r => r.Rutina).Include(e => e.Ejercicio).Where(a => a.Activo == 1 && a.Rutina.Id == rutina.RutinaId && a.Ejercicio.CategoriaId == ejercicioRutina.Ejercicio.CategoriaId).ToListAsync());
-                //return Ok(contexto.Ejercicio_Rutina.FromSqlInterpolated($"SELECT * FROM ejercicio_rutina er INNER JOIN rutina AS r ON er.rutinaid = r.id INNER JOIN ejercicio AS e ON er.ejercicioid = e.id WHERE (er.activo = {1}) AND (r.id = {rutina.RutinaId}) AND (er.dia ={dia}) AND (e.categoriaId ={categoriaId})"));
-                return Ok(await contexto.Ejercicio_Rutina.Include(r => r.Rutina).Include(e => e.Ejercicio).Where(a => a.Activo == 1 && a.Rutina.Id == rutina.RutinaId).ToListAsync());
+                Usuario usuario = await contexto.Usuario.SingleOrDefaultAsync(u => u.Email == User.Identity.Name);
+                Rutina_Usuario rutina = await contexto.Rutina_Usuario.Include(r => r.Rutina).Include(a => a.Alumno).SingleOrDefaultAsync(u => u.AlumnoId == usuario.Id);
+                if (rutina != null)
+                {
+                    List<Ejercicio_Rutina> erList = await contexto.Ejercicio_Rutina.Include(r => r.Rutina).Include(e => e.Ejercicio).Where(a => a.Activo == 1 && a.Rutina.Id == rutina.RutinaId).ToListAsync();
+                    return Ok(erList);
+                }
+                return Ok();
+
             }
             catch (Exception ex)
             {
@@ -118,6 +135,54 @@ namespace GymApi.Api
                 return BadRequest(ex.Message);
             }
         }
+        [HttpPost("AsignarRutina")]
+        public async Task<IActionResult> AsignarRutina([FromBody] Rutina_Usuario rutina)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    Rutina_Usuario ru = null;
+                    List<Rutina_Usuario> rutinas = await contexto.Rutina_Usuario.Where(r => r.AlumnoId == rutina.AlumnoId).ToListAsync();
+                    if (rutinas.Count() > 0)
+                    {
+                        foreach (Rutina_Usuario r in rutinas)
+                        {
+                            if (r.Activo == 1)
+                            {
+                                ru = r;
+                                break;
+                            }
+                        }
+                        if (ru != null)
+                        {
+                            ru.RutinaId = rutina.RutinaId;
+                            ru.Fecha_inicio_rutina = DateTime.Today;
+                            ru.Fecha_fin_rutina = DateTime.Today.AddMonths(1);
+                            ru.Activo = 1;
+                            contexto.Rutina_Usuario.Update(ru);
+                            await contexto.SaveChangesAsync();
+                        }
+                    }
+                    else
+                    {
+                        rutina.Fecha_inicio_rutina = DateTime.Today;
+                        rutina.Fecha_fin_rutina = DateTime.Today.AddMonths(1);
+                        rutina.Activo = 1;
+                        contexto.Rutina_Usuario.Add(rutina);
+                        await contexto.SaveChangesAsync();
+                    }
+
+
+                    return Ok(rutina);
+                }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
         [HttpDelete("BajaRutina/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -125,6 +190,12 @@ namespace GymApi.Api
             {
                 if (ModelState.IsValid)
                 {
+                    List<Ejercicio_Rutina> ejercicioRutina = contexto.Ejercicio_Rutina.Where(er => er.RutinaId == id).ToList();
+                    foreach (Ejercicio_Rutina er in ejercicioRutina)
+                    {
+                        er.Activo = 2;
+                        contexto.Ejercicio_Rutina.Update(er);
+                    }
                     var rutina = contexto.Rutina.Single(r => r.Id == id);
                     rutina.Activo = 2;
                     contexto.Rutina.Update(rutina);

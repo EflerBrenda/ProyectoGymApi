@@ -96,7 +96,6 @@ namespace GymApi.Api
                 {
                     var anuncioActual = contexto.Anuncio.Single(u => u.Id == anuncioEditado.Id);
                     anuncioActual.Descripcion = anuncioEditado.Descripcion;
-                    //anuncioActual.Profesor = contexto.Usuario.Single(p => p.Id == anuncioEditado.ProfesorId);
                     contexto.Anuncio.Update(anuncioActual);
                     await contexto.SaveChangesAsync();
                     return Ok(anuncioActual);
